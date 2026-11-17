@@ -1,0 +1,101 @@
+// Prisma schema for Acme Workspace.
+// Model names map to the existing table names; field names stay camelCase in
+// TypeScript while @map keeps the snake_case columns used in PostgreSQL.
+// Native types, defaults, and constraint names match the existing database so
+// migrate diff reports no drift against the seeded cluster.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @db.Text
+  name          String
+  email         String   @unique(map: "user_email_unique") @db.Text
+  emailVerified Boolean  @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  sessions Session[]
+  accounts Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @db.Text
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  token     String   @unique(map: "session_token_unique") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id") @db.Text
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "session_user_id_user_id_fk")
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @db.Text
+  accountId             String    @map("account_id") @db.Text
+  providerId            String    @map("provider_id") @db.Text
+  userId                String    @map("user_id") @db.Text
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "account_user_id_user_id_fk")
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @db.Text
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@map("verification")
+}
+
+model WorkspacePage {
+  id        String   @id @db.Text
+  title     String
+  icon      String   @default("📄")
+  parentId  String?  @map("parent_id") @db.Text
+  favorite  Boolean   @default(false)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  blocks    Json      @default("[]")
+  cover     String?
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@index([parentId], name: "workspace_page_parent_idx")
+  @@index([updatedAt], name: "workspace_page_updated_idx")
+  @@index([deletedAt], name: "workspace_page_deleted_at_idx")
+  @@map("workspace_page")
+}
+
+model AiConversation {
+  id        String   @id @db.Text
+  pageId    String?  @map("page_id") @db.Text
+  messages  Json     @default("[]")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@map("ai_conversation")
+}
