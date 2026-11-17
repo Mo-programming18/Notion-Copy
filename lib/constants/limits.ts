@@ -1,0 +1,15 @@
+export const LIMITS = {
+  title: 200,
+  icon: 16,
+  blockText: 20_000,
+  blocks: 2_000,
+  searchQuery: 120,
+  chatMessage: 8_000,
+  chatHistory: 30,
+  pageList: 1_000,
+  recentPages: 8,
+  inboxItems: 8,
+  favoritesPreview: 7,
+  commandResults: 12,
+  passwordMin: 8,
+} as const;
